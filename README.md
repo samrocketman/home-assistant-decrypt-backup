@@ -1,0 +1,64 @@
+# hassio-tar
+
+A simple tool which can decrypt Home Assistant SecureTar encrypted backups.
+
+It makes a minimal effort to decrypt and decompress the backup.  It writes the
+tar output to stdout which you can process with tar command yourself.
+
+Works with encrypted tar directly or an inner tar within a Home Assistant
+backup.
+
+# Requirements
+
+- Bash
+- OpenSSL
+- BSD or GNU core utils; or BusyBox
+
+Set `HASSIO_PASSWORD` environment variable with your backup password.
+
+    export HASSIO_PASSWORD
+    read -ersp password: HASSIO_PASSWORD
+
+# Examples
+
+It can process encrypted tars directly.  For example, a backup of wireguard-ui
+add-on.
+
+    ./hassio-tar.sh ./c92fe070_wireguard-ui.tar.gz | tar -t
+    mkdir wireguard-ui
+    ./hassio-tar.sh ./c92fe070_wireguard-ui.tar.gz | tar -x -C ./wireguard-ui/
+
+List the contents of a tar file (a Home Assistant Backup).
+
+    ./hassio-tar.sh WireGuard_UI_1_2025-05-08_00.21_39444028.tar
+
+Followed by decrypting and decrypting an inner tar within a Home Assistant
+backup.
+
+    ./hassio-tar.sh WireGuard_UI_1_2025-05-08_00.21_39444028.tar ./c92fe070_wireguard-ui.tar.gz
+
+# Docker Examples
+
+`hassio-tar.sh` can process backups on stdin as well.  Start by building the
+docker image example.
+
+    docker build -t hassio-tar .
+
+List the contents of a Home Assistant backup.
+
+```bash
+docker run \
+  -i \
+  -e HASSIO_PASSWORD hassio-tar \
+  < WireGuard_UI_1_2025-05-08_00.21_39444028.tar
+```
+
+Decrypt an encrypted inner tar within a Home Assistant backup.
+```bash
+docker run \
+  -i \
+  -e HASSIO_PASSWORD \
+  hassio-tar \
+  c92fe070_wireguard-ui.tar.gz \
+  < WireGuard_UI_1_2025-05-08_00.21_39444028.tar | tar -t
+```

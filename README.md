@@ -37,6 +37,15 @@ backup.
 
     ./hassio-tar.sh WireGuard_UI_1_2025-05-08_00.21_39444028.tar ./c92fe070_wireguard-ui.tar.gz
 
+Because `hassio-tar.sh` handles streams, it can be used to manage only decryption and decompression.  The following example uses `tar` to extract the encrypted SecureTar, `hassio-tar.sh` to decrypt and decompress the SecureTar, followed by tar to extract the add-on contents for extraction.
+
+```bash
+mkdir some-addon
+tar -xOf your-backup.tar file.tar.gz  | \
+  hassio-tar.sh | \
+  tar -xC some-addon
+```
+
 # Docker Examples
 
 `hassio-tar.sh` can process backups on stdin as well.  Start by building the

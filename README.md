@@ -62,3 +62,10 @@ docker run \
   c92fe070_wireguard-ui.tar.gz \
   < WireGuard_UI_1_2025-05-08_00.21_39444028.tar | tar -t
 ```
+
+
+# Security Disclosure
+
+OpenSSL CLI has a known limitation where the AES Key and IV are only supported as command line arguments.
+
+If another user on the system inspects process arguments (e.g. `ps aux`), then the key and IV will be visible for the file being decrypted.

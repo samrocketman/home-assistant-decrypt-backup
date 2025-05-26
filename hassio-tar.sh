@@ -15,7 +15,7 @@
 #   - coreutils or busybox
 # SECURITY DISCLOSURE
 #   OpenSSL CLI has a known limitation where the AES Key and IV are only
-#   supported as command line arguments.  This exposes they key and IV to
+#   supported as command line arguments.  This exposes the key and IV to
 #   decrypt a single file inside of your Home Assistant Backup if another user
 #   runs `ps aux` at a time when decryption is occurring.
 

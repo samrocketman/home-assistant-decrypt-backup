@@ -51,32 +51,11 @@ tar -xOf your-backup.tar file.tar.gz  | \
 
 # Docker Examples
 
-`hassio-tar.sh` can process backups on stdin as well.  Start by building the
-docker image example.
+Using the [self contained binary](go-hassio-tar) via Docker is recommended.
 
-    docker build -t hassio-tar .
-
-List the contents of a Home Assistant backup.
-
-```bash
-docker run \
-  --rm \
-  -i \
-  -e HASSIO_PASSWORD hassio-tar \
-  < WireGuard_UI_1_2025-05-08_00.21_39444028.tar
-```
-
-Decrypt an encrypted inner tar within a Home Assistant backup.
-```bash
-docker run \
-  --rm \
-  -i \
-  -e HASSIO_PASSWORD \
-  hassio-tar \
-  c92fe070_wireguard-ui.tar.gz \
-  < WireGuard_UI_1_2025-05-08_00.21_39444028.tar | tar -t
-```
-
+The shell script [Dockerfile](Dockerfile) primary purpose is to showcase the
+minimal dependencies.  If you still want to try out only the shell script, then
+see [docs for the shell script docker example](docs/docker-example.md).
 
 # Security Disclosure
 
@@ -86,4 +65,5 @@ as command line arguments.
 If another user on the system inspects process arguments (e.g. `ps aux`), then
 the key and IV will be visible for the file being decrypted.
 
-[The Go version is all in-memory and more secure](go-hassio-tar).
+[The Go version is all in-memory and more secure](go-hassio-tar).  It also does
+a little extra post-decryption verification.

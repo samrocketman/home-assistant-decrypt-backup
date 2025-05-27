@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -16,7 +17,7 @@ func main() {
 		0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x54, 0x61,
 		0x72, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	}
-	// SecureTar header is 48 bytes (16 magic, 16 don't care, 16 salt)
+	// SecureTar header: magic (16 bytes), expected size (8 bytes), zero (8 bytes), salt (16 bytes)
 	const headerSize = 48
 
 	// Create a buffer to hold the header
@@ -32,28 +33,25 @@ func main() {
 		}
 		os.Exit(1)
 	}
-
 	if n < headerSize {
 		_, err = os.Stdout.Write(header)
 		os.Exit(0)
 	}
-
 	if !bytes.Equal(header[:len(secureTarMagic)], secureTarMagic[:]) {
 		_, err = os.Stdout.Write(header)
 		_, err = io.Copy(os.Stdout, os.Stdin)
 		os.Exit(0)
 	}
-
+	// SecureTar from this point onward
 	hassioPassword := os.Getenv("HASSIO_PASSWORD")
 	if hassioPassword == "" {
 		fmt.Fprintln(os.Stderr, "ERROR: SecureTar found but HASSIO_PASSWORD not set.")
 		os.Exit(1)
 	}
-	key, _ := Sha256Iterating100Times([]byte(hassioPassword))
-	// last 16 bytes of 48-byte header is salt
-	iv, _ := Sha256Iterating100Times(append(key[:], header[32:]...))
-	//fmt.Fprintf(os.Stderr, "key: %x\n", key)
-	//fmt.Fprintf(os.Stderr, "iv: %x\n", iv)
+	var expected_data_size uint64
+	expected_data_size = binary.BigEndian.Uint64(header[16:24])
+	key, _ := sha256Iterating100Times([]byte(hassioPassword))
+	iv, _ := sha256Iterating100Times(append(key[:], header[32:]...))
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating cipher: %v\n", err)
@@ -61,35 +59,51 @@ func main() {
 	}
 	stream := cipher.NewCBCDecrypter(block, iv)
 	buffer := make([]byte, 1024)
+	var decrypted []byte
+	decrypted = nil
+	var decrypted_size uint64
+	decrypted_size = 0
 	for {
-		n, err := os.Stdin.Read(buffer)
-		if n > 0 {
-			// Decrypt the data
-			decrypted := make([]byte, n)
-			stream.CryptBlocks(decrypted, buffer[:n])
-			unpadded := decrypted
-			if n < 1024 {
-				unpadded, err = pkcs7Unpad(decrypted)
-				if err != nil {
-					panic(err)
-				}
-			}
-			// Write the decrypted data to stdout
-			_, err = os.Stdout.Write(unpadded)
-			if err != nil {
-				panic(err)
-			}
-		}
+		n, err = os.Stdin.Read(buffer)
 		if err == io.EOF {
 			break
+		}
+		if decrypted != nil {
+			decrypted_size += uint64(len(decrypted))
+			_, err = os.Stdout.Write(decrypted)
+		}
+		if n > 0 {
+			// Decrypt the data
+			decrypted = make([]byte, n)
+			stream.CryptBlocks(decrypted, buffer[:n])
 		}
 		if err != nil {
 			panic(err)
 		}
 	}
+	if decrypted != nil && len(decrypted) > 0 {
+		// Process the remaining decrypted data
+		var unpadded []byte
+		if expected_data_size == (decrypted_size + uint64(len(decrypted))) {
+			unpadded = decrypted
+		} else {
+			unpadded = pkcs7Unpad(decrypted[:])
+		}
+		decrypted_size += uint64(len(unpadded))
+		_, err = os.Stdout.Write(unpadded)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if expected_data_size != decrypted_size {
+		message := "================================================================================\n"
+		message += "ERROR: Post-decryption: expected %v bytes but decrypted %v bytes\n"
+		message += message[:81]
+		fmt.Fprintf(os.Stderr, message, expected_data_size, decrypted_size)
+		os.Exit(1)
+	}
 }
-
-func Sha256Iterating100Times(input []byte) ([]byte, error) {
+func sha256Iterating100Times(input []byte) ([]byte, error) {
 	hash := input
 	for range 100 {
 		hasher := sha256.New()
@@ -101,23 +115,18 @@ func Sha256Iterating100Times(input []byte) ([]byte, error) {
 	}
 	return hash[:16], nil
 }
-
-func pkcs7Unpad(data []byte) ([]byte, error) {
-	if len(data) == 0 {
-		return nil, fmt.Errorf("pkcs7: data is empty")
-	}
+func pkcs7Unpad(data []byte) []byte {
 	padding := int(data[len(data)-1])
-	if padding > len(data) {
-		return nil, fmt.Errorf("pkcs7: invalid padding size greater than block size")
-	}
-	if padding == 0 {
-		return nil, fmt.Errorf("pkcs7: invalid padding size zero")
+	// padding > len(data) -> return nil, fmt.Errorf("pkcs7: invalid padding size greater than block size")
+	// padding == 0 -> return nil, fmt.Errorf("pkcs7: invalid padding size zero")
+	if padding > len(data) || padding == 0 {
+		return data
 	}
 	for i := len(data) - padding; i < len(data); i++ {
 		if int(data[i]) != padding {
-			return data, nil
+			return data
 			//return nil, fmt.Errorf("pkcs7: invalid padding byte")
 		}
 	}
-	return data[:len(data)-padding], nil
+	return data[:len(data)-padding]
 }

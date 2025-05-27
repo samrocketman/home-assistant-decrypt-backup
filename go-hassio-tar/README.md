@@ -1,8 +1,11 @@
-# EXPERIMENTAL hassio-tar - A Go-based version
+# hassio-tar - A Go-based version
 
-> This version has been known to fail.  For reliability you should only use the
-> shell script `hassio-tar.sh`.
-
+- :white_check_mark: Small distroless docker image (<2MB)
+- :white_check_mark: More secure than the shell script. This version uses
+  in-memory decryption stream and non-root execution.
+- :white_check_mark: Better integrity - There's a small decryption check
+  verifying the decrypted size matches the expected size [reported by
+  SecureTar][securetar] format.
 
 It's a little more minimal than the shell script.  It purely handles streams via
 stdin and stdout.  The recommended deployment is via the distroless docker
@@ -30,3 +33,4 @@ tar -xOf backup.tar inner-addon.tar.gz | \
   htar | \
   tar -tz
 ```
+[securetar]: https://github.com/pvizeli/securetar

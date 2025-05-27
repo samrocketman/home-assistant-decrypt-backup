@@ -65,51 +65,59 @@ func main() {
 		n, err := os.Stdin.Read(buffer)
 		if n > 0 {
 			// Decrypt the data
-			stream.CryptBlocks(buffer[:n], buffer[:n])
-			// Write the decrypted data to stdout
+			decrypted := make([]byte, n)
+			stream.CryptBlocks(decrypted, buffer[:n])
+			unpadded := decrypted
 			if n < 1024 {
-				output, err := removePadding(buffer[:n])
+				unpadded, err = pkcs7Unpad(decrypted)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Cipher padding error: %v\n", err)
-					os.Exit(1)
+					panic(err)
 				}
-				os.Stdout.Write(output)
-			} else {
-				os.Stdout.Write(buffer[:n])
+			}
+			// Write the decrypted data to stdout
+			_, err = os.Stdout.Write(unpadded)
+			if err != nil {
+				panic(err)
 			}
 		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading from stdin: %v\n", err)
-			os.Exit(1)
+			panic(err)
 		}
 	}
 }
-func Sha256Iterating100Times(data []byte) ([]byte, error) {
-	b := data
 
+func Sha256Iterating100Times(input []byte) ([]byte, error) {
+	hash := input
 	for range 100 {
-		h := sha256.New()
-		if _, err := h.Write(b); err != nil {
+		hasher := sha256.New()
+		_, err := hasher.Write(hash)
+		if err != nil {
 			return nil, err
 		}
-
-		b = h.Sum(nil)
+		hash = hasher.Sum(nil)
 	}
-
-	return b[:16], nil
+	return hash[:16], nil
 }
-func removePadding(data []byte) ([]byte, error) {
+
+func pkcs7Unpad(data []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("empty data")
+		return nil, fmt.Errorf("pkcs7: data is empty")
 	}
-
-	paddingLength := int(data[len(data)-1])
-	if paddingLength > len(data) || paddingLength == 0 {
-		return nil, fmt.Errorf("invalid padding length")
+	padding := int(data[len(data)-1])
+	if padding > len(data) {
+		return nil, fmt.Errorf("pkcs7: invalid padding size greater than block size")
 	}
-
-	return data[:len(data)-paddingLength], nil
+	if padding == 0 {
+		return nil, fmt.Errorf("pkcs7: invalid padding size zero")
+	}
+	for i := len(data) - padding; i < len(data); i++ {
+		if int(data[i]) != padding {
+			return data, nil
+			//return nil, fmt.Errorf("pkcs7: invalid padding byte")
+		}
+	}
+	return data[:len(data)-padding], nil
 }

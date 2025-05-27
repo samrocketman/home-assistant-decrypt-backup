@@ -1,4 +1,8 @@
-# hassio-tar - A Go-based version
+# EXPERIMENTAL hassio-tar - A Go-based version
+
+> This version has been known to fail.  For reliability you should only use the
+> shell script `hassio-tar.sh`.
+
 
 It's a little more minimal than the shell script.  It purely handles streams via
 stdin and stdout.  The recommended deployment is via the distroless docker

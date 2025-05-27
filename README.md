@@ -1,7 +1,4 @@
-# EXPERIMENTAL hassio-tar
-
-> This version has been known to fail.  For reliability you should only use the
-> shell script `hassio-tar.sh`.
+# hassio-tar
 
 A simple tool which can decrypt Home Assistant SecureTar encrypted backups.
 

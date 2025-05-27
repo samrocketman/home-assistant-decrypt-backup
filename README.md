@@ -2,8 +2,8 @@
 
 A simple tool which can decrypt Home Assistant SecureTar encrypted backups.
 
-It makes a minimal effort to decrypt and decompress the backup.  It writes the
-tar output to stdout which you can process with tar command yourself.
+It will decrypt and decompress the backup.  It writes the tar output to stdout
+which you can process with tar command yourself.
 
 Works with encrypted tar directly or an inner tar within a Home Assistant
 backup.
@@ -37,7 +37,10 @@ backup.
 
     ./hassio-tar.sh WireGuard_UI_1_2025-05-08_00.21_39444028.tar ./c92fe070_wireguard-ui.tar.gz
 
-Because `hassio-tar.sh` handles streams, it can be used to manage only decryption and decompression.  The following example uses `tar` to extract the encrypted SecureTar, `hassio-tar.sh` to decrypt and decompress the SecureTar, followed by tar to extract the add-on contents for inspection.
+Because `hassio-tar.sh` handles streams, it can be used to manage only
+decryption and decompression.  The following example uses `tar` to extract the
+encrypted SecureTar, `hassio-tar.sh` to decrypt and decompress the SecureTar,
+followed by tar to extract the add-on contents for inspection.
 
 ```bash
 mkdir some-addon
@@ -57,6 +60,7 @@ List the contents of a Home Assistant backup.
 
 ```bash
 docker run \
+  --rm \
   -i \
   -e HASSIO_PASSWORD hassio-tar \
   < WireGuard_UI_1_2025-05-08_00.21_39444028.tar
@@ -65,6 +69,7 @@ docker run \
 Decrypt an encrypted inner tar within a Home Assistant backup.
 ```bash
 docker run \
+  --rm \
   -i \
   -e HASSIO_PASSWORD \
   hassio-tar \
@@ -75,6 +80,10 @@ docker run \
 
 # Security Disclosure
 
-OpenSSL CLI has a known limitation where the AES Key and IV are only supported as command line arguments.
+OpenSSL CLI has a known limitation where the AES Key and IV are only supported
+as command line arguments.
 
-If another user on the system inspects process arguments (e.g. `ps aux`), then the key and IV will be visible for the file being decrypted.
+If another user on the system inspects process arguments (e.g. `ps aux`), then
+the key and IV will be visible for the file being decrypted.
+
+[The Go version is all in-memory and more secure](go-hassio-tar).

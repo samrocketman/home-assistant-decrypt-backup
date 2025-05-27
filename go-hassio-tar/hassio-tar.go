@@ -97,7 +97,7 @@ func main() {
 	}
 	if expected_data_size != decrypted_size {
 		message := "================================================================================\n"
-		message += "ERROR: Post-decryption: expected %v bytes but decrypted %v bytes\n"
+		message += "ERROR: SecureTar expected %v bytes but decrypted %v bytes\n"
 		message += message[:81]
 		fmt.Fprintf(os.Stderr, message, expected_data_size, decrypted_size)
 		os.Exit(1)

@@ -25,7 +25,8 @@ RUN \
 
 ENV PATH=/usr/local/go/bin:/usr/local/tinygo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 COPY hassio-tar.go hassio-tar.go
-RUN  tinygo build hassio-tar.go; \
+ENV CGO_ENABLED=0
+RUN tinygo build hassio-tar.go; \
   mv hassio-tar /base/bin/
 
 FROM scratch

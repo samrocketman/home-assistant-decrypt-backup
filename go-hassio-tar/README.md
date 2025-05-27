@@ -7,6 +7,14 @@
   verifying the decrypted size matches the expected size [reported by
   SecureTar][securetar] format.
 
+# Pre-compiled releases
+
+Pre-compiled [GitHub releases][releases].
+
+[releases]: https://github.com/samrocketman/home-assistant-decrypt-backup/releases
+
+# Compile yourself with Docker
+
 It's a little more minimal than the shell script.  It purely handles streams via
 stdin and stdout.  The recommended deployment is via the distroless docker
 image.
@@ -33,4 +41,5 @@ tar -xOf backup.tar inner-addon.tar.gz | \
   htar | \
   tar -tz
 ```
+
 [securetar]: https://github.com/pvizeli/securetar

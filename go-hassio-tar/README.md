@@ -1,6 +1,6 @@
 # hassio-tar - A Go-based version
 
-- :white_check_mark: Small distroless docker image (<2MB)
+- :white_check_mark: Small distroless docker image (<1MB)
 - :white_check_mark: More secure than the shell script. This version uses
   in-memory decryption stream and non-root execution.
 - :white_check_mark: Better integrity - There's a small decryption check

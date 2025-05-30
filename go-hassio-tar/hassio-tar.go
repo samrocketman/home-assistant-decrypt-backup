@@ -78,7 +78,7 @@ func main() {
 			stream.CryptBlocks(decrypted, buffer[:n])
 		}
 		if err != nil {
-			panic(err)
+			printError("1 -", err)
 		}
 	}
 	if decrypted != nil && len(decrypted) > 0 {
@@ -92,16 +92,19 @@ func main() {
 		decrypted_size += uint64(len(unpadded))
 		_, err = os.Stdout.Write(unpadded)
 		if err != nil {
-			panic(err)
+			printError("2 -", err)
 		}
 	}
 	if expected_data_size != decrypted_size {
-		message := "================================================================================\n"
-		message += "ERROR: SecureTar expected %v bytes but decrypted %v bytes\n"
-		message += message[:81]
-		fmt.Fprintf(os.Stderr, message, expected_data_size, decrypted_size)
-		os.Exit(1)
+        printError("SecureTar", fmt.Errorf("expected %v bytes but decrypted %v bytes", expected_data_size, decrypted_size))
 	}
+}
+func printError(traceid string, err error) {
+    message := "================================================================================\n"
+    message += "ERROR: %v %v\n"
+    message += message[:81]
+    fmt.Fprintf(os.Stderr, message, traceid, err)
+    os.Exit(1)
 }
 func sha256Iterating100Times(input []byte) ([]byte, error) {
 	hash := input

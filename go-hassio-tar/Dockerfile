@@ -4,8 +4,8 @@ RUN \
   apk add bash curl git; \
   curl -sSfLo /usr/local/bin/download-utilities.sh https://raw.githubusercontent.com/samrocketman/yml-install-files/33f873043002ef1923859046652b284581b988b6/download-utilities.sh; \
   chmod 755 /usr/local/bin/download-utilities.sh; \
-  curl -sSfL https://raw.githubusercontent.com/samrocketman/goenv/c2263e6e72fa65600db203db95a315f99b6dfbd7/go.yml | \
-    download-utilities.sh - go tinygo
+  curl -sSfL https://raw.githubusercontent.com/samrocketman/goenv/c742492b3a44a094a86a53eefa8efa6060c771ab/go.yml | \
+    download-utilities.sh - go=1.24.3 tinygo=0.37.0 upx=5.0.1
 
 # prepare a base scratch
 RUN \
@@ -27,6 +27,7 @@ ENV PATH=/usr/local/go/bin:/usr/local/tinygo/bin:/usr/local/sbin:/usr/local/bin:
 COPY hassio-tar.go hassio-tar.go
 ENV CGO_ENABLED=0
 RUN tinygo build hassio-tar.go; \
+  upx hassio-tar; \
   mv hassio-tar /base/bin/
 
 FROM scratch

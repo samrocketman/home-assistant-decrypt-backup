@@ -28,9 +28,16 @@ for os in linux darwin windows; do
     export GOARCH="${arch}" GOOS="${os}";
     if [ "${arch}" = arm ]; then
       GOARM=6 tinygo build -o "release/hassio-tar-${os}-armv6" hassio-tar.go;
+      upx "release/hassio-tar-${os}-armv6"
       GOARM=7 tinygo build -o "release/hassio-tar-${os}-armv7" hassio-tar.go;
+      upx "release/hassio-tar-${os}-armv7"
     else
       tinygo build -o "release/hassio-tar-${os}-${arch/386/i386}${ext:-}" hassio-tar.go;
+      if [ "$os" = linux ] || {
+          [ "$os" = windows ] && [ "$arch" = amd64 ]
+        }; then
+        upx "release/hassio-tar-${os}-${arch/386/i386}${ext:-}"
+      fi
     fi;
   done;
 done;

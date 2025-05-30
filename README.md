@@ -10,14 +10,20 @@ backup.
 
 # Requirements
 
-- Bash
-- OpenSSL
-- BSD or GNU core utils; or BusyBox
-
 Set `HASSIO_PASSWORD` environment variable with your backup password.
 
     export HASSIO_PASSWORD
     read -ersp password: HASSIO_PASSWORD
+
+:white_check_mark: No additional requirements if using [self-contained
+binary](go-hassio-tar/README.md).
+
+Otherwise, if you decide to use the shell script you'll need.
+
+- Bash
+- OpenSSL
+- BSD or GNU core utils; or BusyBox
+
 
 # Examples
 

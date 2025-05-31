@@ -96,15 +96,15 @@ func main() {
 		}
 	}
 	if expected_data_size != decrypted_size {
-        printError("SecureTar", fmt.Errorf("expected %v bytes but decrypted %v bytes", expected_data_size, decrypted_size))
+		printError("SecureTar", fmt.Errorf("expected %v bytes but decrypted %v bytes", expected_data_size, decrypted_size))
 	}
 }
 func printError(traceid string, err error) {
-    message := "================================================================================\n"
-    message += "ERROR: %v %v\n"
-    message += message[:81]
-    fmt.Fprintf(os.Stderr, message, traceid, err)
-    os.Exit(1)
+	message := "================================================================================\n"
+	message += "ERROR: %v %v\n"
+	message += message[:81]
+	fmt.Fprintf(os.Stderr, message, traceid, err)
+	os.Exit(1)
 }
 func sha256Iterating100Times(input []byte) ([]byte, error) {
 	hash := input

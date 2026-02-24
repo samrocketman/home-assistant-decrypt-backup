@@ -1,6 +1,12 @@
 # hassio-tar - A Go-based version
 
-- :white_check_mark: Small distroless docker image (<1MB)
+| HA Backup Encryption | Supported? | Since HA version  |
+| -------------------- | ---------- | ----------------- |
+| v1                   | ❌         | n/a               |
+| v2                   | ✅         | 2025.2.0 - latest |
+| v3                   | ✅         | not released, yet |
+
+- :white_check_mark: Small distroless docker image
 - :white_check_mark: More secure than the shell script. This version uses
   in-memory decryption stream and non-root execution.
 - :white_check_mark: Better integrity - There's a small decryption check
@@ -42,4 +48,4 @@ tar -xOf backup.tar inner-addon.tar.gz | \
   tar -tz
 ```
 
-[securetar]: https://github.com/pvizeli/securetar
+[securetar]: https://github.com/home-assistant-libs/securetar

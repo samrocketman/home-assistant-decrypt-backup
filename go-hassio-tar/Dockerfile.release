@@ -1,13 +1,15 @@
-FROM alpine
-SHELL ["/bin/sh", "-exc"]
+FROM ubuntu:22.04
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN \
-  apk add bash curl git; \
+  apt-get update; \
+  apt-get install -y curl vim git make xz-utils gcc; \
   curl -sSfLo /usr/local/bin/download-utilities.sh https://raw.githubusercontent.com/samrocketman/yml-install-files/33f873043002ef1923859046652b284581b988b6/download-utilities.sh; \
   chmod 755 /usr/local/bin/download-utilities.sh; \
   curl -sSfL https://raw.githubusercontent.com/samrocketman/goenv/c742492b3a44a094a86a53eefa8efa6060c771ab/go.yml | \
-    download-utilities.sh - go=1.24.3 tinygo=0.37.0 upx=5.0.1
+    download-utilities.sh - go=1.25.6 tinygo=0.40.1 upx=5.1.0
 
 ENV PATH=/usr/local/go/bin:/usr/local/tinygo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-COPY hassio-tar.go release.sh ./
+WORKDIR /opt
+COPY go.mod go.sum hassio-tar.go secretstream.go release.sh ./
 ENV CGO_ENABLED=0
 RUN bash ./release.sh

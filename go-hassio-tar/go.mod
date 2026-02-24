@@ -1,6 +1,6 @@
 module github.com/samrocketman/home-assistant-decrypt-backup/go-hassio-tar
 
-go 1.25
+go 1.23
 
 require (
 	github.com/gtank/blake2 v0.1.1

@@ -6,7 +6,7 @@ RUN \
   curl -sSfLo /usr/local/bin/download-utilities.sh https://raw.githubusercontent.com/samrocketman/yml-install-files/33f873043002ef1923859046652b284581b988b6/download-utilities.sh; \
   chmod 755 /usr/local/bin/download-utilities.sh; \
   curl -sSfL https://raw.githubusercontent.com/samrocketman/goenv/c742492b3a44a094a86a53eefa8efa6060c771ab/go.yml | \
-    download-utilities.sh - go=1.25.6 tinygo=0.40.1 upx=5.1.0
+    download-utilities.sh - go=1.23.12 tinygo=0.40.1 upx=5.1.0
 
 # prepare a base scratch
 RUN \
@@ -31,7 +31,7 @@ COPY go.mod go.sum hassio-tar.go secretstream.go ./
 ENV CGO_ENABLED=0
 RUN \
   tinygo build -o hassio-tar .; \
-#  upx hassio-tar; \
+  upx hassio-tar; \
   mv hassio-tar /base/bin/
 
 FROM scratch

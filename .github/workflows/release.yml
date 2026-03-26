@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  check-changes:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      go_changed: ${{ steps.changes.outputs.go_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: changes
+        run: |
+          if git diff --name-only HEAD~1 | grep -qE '\.go$|go\.mod$|go\.sum$'; then
+            echo "go_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-tag:
+    needs: check-changes
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       needs.check-changes.outputs.go_changed == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.version.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve bump type
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ github.event.inputs.bump }}" >> "$GITHUB_OUTPUT"
+          else
+            LABELS=$(gh pr list \
+              --search "${{ github.sha }}" \
+              --state merged \
+              --json labels \
+              --jq '.[0].labels[].name' 2>/dev/null || true)
+            if echo "$LABELS" | grep -qx 'release:major'; then
+              echo "type=major" >> "$GITHUB_OUTPUT"
+            elif echo "$LABELS" | grep -qx 'release:minor'; then
+              echo "type=minor" >> "$GITHUB_OUTPUT"
+            else
+              echo "type=patch" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+      - name: Determine version
+        id: version
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]' | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0"
+          fi
+
+          MAJOR=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f1)
+          MINOR=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f2)
+          PATCH=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f3)
+
+          BUMP="${{ steps.bump.outputs.type }}"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "Bumping $LATEST_TAG -> $NEW_TAG ($BUMP)"
+      - name: Create and push tag
+        run: |
+          git tag ${{ steps.version.outputs.new_tag }}
+          git push origin ${{ steps.version.outputs.new_tag }}

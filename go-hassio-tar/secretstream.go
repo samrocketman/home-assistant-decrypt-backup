@@ -1,3 +1,7 @@
+/*
+Copyright 2025-2026 Sam Gleske - https://github.com/samrocketman/home-assistant-decrypt-backup/blob/main/LICENSE
+Apache License - Version 2.0, January 2004
+*/
 // Package main - libsodium-compatible crypto_secretstream_xchacha20poly1305 decryption.
 // Inlined from github.com/openziti/secretstream to avoid extra dependency.
 // https://github.com/openziti/secretstream/blob/353218d728b15083b92de93e84b27d429a2917d0/LICENSE

@@ -1,4 +1,4 @@
-module github.com/samrocketman/home-assistant-decrypt-backup/go-hassio-tar
+module github.com/samrocketman/home-assistant-decrypt-backup
 
 go 1.23
 

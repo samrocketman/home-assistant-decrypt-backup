@@ -34,7 +34,7 @@ const (
 	v3CipherInitSize     = 16 + 16 + 32 + 16 + 24 // 104 bytes
 	v3HeaderSize         = 16 + 16 + 104          // 136 bytes
 	v3KDFOpsLimit        = 8
-	v3KDFMemLimit        = 16 * 1024 * 1024 // 16 MiB
+	v3KDFMemLimit        = 16 * 1024 // 16 MiB in KiB (argon2.IDKey takes KiB)
 	v3Blake2bPerson      = "SecureTarv3"
 )
 

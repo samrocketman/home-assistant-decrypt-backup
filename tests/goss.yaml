@@ -1,0 +1,40 @@
+command:
+  decrypt_v2:
+    exec: "bash -c 'export HASSIO_PASSWORD=$(cat /tmp/test-fixtures/password.txt); tar -xOf /tmp/test-fixtures/backup_v2.tar core.tar.gz | /usr/local/bin/hassio-tar | tar -tz'"
+    exit-status: 0
+    stdout:
+      - ./
+      - ./hello.txt
+    timeout: 30000
+  decrypt_v3:
+    exec: "bash -c 'export HASSIO_PASSWORD=$(cat /tmp/test-fixtures/password.txt); tar -xOf /tmp/test-fixtures/backup_v3.tar core.tar.gz | /usr/local/bin/hassio-tar | tar -tz'"
+    exit-status: 0
+    stdout:
+      - ./
+      - ./hello.txt
+    timeout: 120000
+  decrypt_v3_wrong_password:
+    exec: "bash -c 'export HASSIO_PASSWORD=wrong; tar -xOf /tmp/test-fixtures/backup_v3.tar core.tar.gz | /usr/local/bin/hassio-tar > /dev/null'"
+    exit-status: 1
+    stderr:
+      - "Invalid password for SecureTar v3"
+    timeout: 120000
+  missing_password_v2:
+    exec: "bash -c 'unset HASSIO_PASSWORD; tar -xOf /tmp/test-fixtures/backup_v2.tar core.tar.gz | /usr/local/bin/hassio-tar > /dev/null'"
+    exit-status: 1
+    stderr:
+      - "HASSIO_PASSWORD not set"
+    timeout: 30000
+  missing_password_v3:
+    exec: "bash -c 'unset HASSIO_PASSWORD; tar -xOf /tmp/test-fixtures/backup_v3.tar core.tar.gz | /usr/local/bin/hassio-tar > /dev/null'"
+    exit-status: 1
+    stderr:
+      - "HASSIO_PASSWORD not set"
+    timeout: 30000
+  plain_passthrough:
+    exec: "bash -c 'cat /tmp/test-fixtures/backup_plain.tar | /usr/local/bin/hassio-tar | tar -t'"
+    exit-status: 0
+    stdout:
+      - ./
+      - ./hello.txt
+    timeout: 30000

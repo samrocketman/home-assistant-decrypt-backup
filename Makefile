@@ -1,7 +1,18 @@
+.PHONY: lint release release-snapshot test clean
+
+lint:
+	go fmt ./...
+	go vet ./...
+
 release:
-	docker build -t hassio-tar-release -f go-hassio-tar/Dockerfile.release go-hassio-tar
-	docker run --rm hassio-tar-release cat /release.tar | tar -x --no-same-owner
-	(cd release; for x in *; do sha256sum "$$x" > "$$x".sha256;done)
-	docker run --rm hassio-tar-release /bin/bash -c 'go version; tinygo version; upx --version | head -n1' > release/build-environment.txt
+	goreleaser release --clean
+
+release-snapshot:
+	goreleaser build --snapshot --clean
+
+test:
+	docker build -f Dockerfile.test -t hassio-tar-test .
+	docker run --rm hassio-tar-test
+
 clean:
-	rm -rf release
+	rm -rf dist/ release/ hassio-tar

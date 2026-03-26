@@ -37,19 +37,55 @@ jobs:
             echo "go_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-  create-tag:
+  test:
     needs: check-changes
     if: |
       always() &&
       (github.event_name == 'workflow_dispatch' ||
        needs.check-changes.outputs.go_changed == 'true')
     runs-on: ubuntu-latest
-    outputs:
-      new_tag: ${{ steps.version.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Run tests
+        run: make test
+
+  lint:
+    needs: check-changes
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       needs.check-changes.outputs.go_changed == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version-file: go.mod
+      - name: Lint
+        run: |
+          make lint
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "::error::go fmt produced changes; please run 'make lint' locally"
+            git diff --name-only
+            exit 1
+          fi
+
+  release:
+    needs: [check-changes, test, lint]
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       needs.check-changes.outputs.go_changed == 'true') &&
+      needs.test.result == 'success' &&
+      needs.lint.result == 'success'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version-file: go.mod
       - name: Resolve bump type
         id: bump
         env:
@@ -98,3 +134,9 @@ jobs:
         run: |
           git tag ${{ steps.version.outputs.new_tag }}
           git push origin ${{ steps.version.outputs.new_tag }}
+      - name: Release
+        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7
+        with:
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      go_changed: ${{ steps.changes.outputs.go_changed }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+      - id: changes
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '\.go$|go\.mod$|go\.sum$'; then
+            echo "go_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    needs: check-changes
+    if: needs.check-changes.outputs.go_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Run tests
+        run: make ci
+      - name: Test report
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3
+        if: always()
+        with:
+          name: Goss Tests
+          path: test-results/goss-report.xml
+          reporter: java-junit
+
+  lint:
+    needs: check-changes
+    if: needs.check-changes.outputs.go_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version-file: go.mod
+      - name: Lint
+        run: |
+          make lint
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "::error::go fmt produced changes; please run 'make lint' locally"
+            git diff --name-only
+            exit 1
+          fi
+
+  pr-build:
+    needs: [check-changes, test, lint]
+    if: |
+      needs.check-changes.outputs.go_changed == 'true' &&
+      needs.test.result == 'success' &&
+      needs.lint.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version-file: go.mod
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7
+        with:
+          install-only: true
+      - name: Build snapshot
+        run: make release-snapshot
+      - name: Upload artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hassio-tar-binaries
+          path: dist/*/hassio-tar*

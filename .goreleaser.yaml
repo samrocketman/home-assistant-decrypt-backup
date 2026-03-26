@@ -1,0 +1,52 @@
+version: 2
+
+builds:
+  - id: hassio-tar
+    main: ./go-hassio-tar
+    binary: hassio-tar
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "6"
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm
+    ldflags:
+      - -s -w
+
+archives:
+  - id: hassio-tar
+    formats:
+      - binary
+    name_template: >-
+      hassio-tar-{{ .Os }}-{{ if eq .Arch "amd64" }}amd64{{ else if eq .Arch "386" }}i386{{ else if eq .Arch "arm" }}armv{{ .Arm }}{{ else }}{{ .Arch }}{{ end }}{{ if eq .Os "windows" }}.exe{{ end }}
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  draft: false
+  prerelease: auto
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

@@ -2,4 +2,7 @@
 *.gz
 passwd
 plain
-release
+release/
+dist/
+test-results/
+hassio-tar

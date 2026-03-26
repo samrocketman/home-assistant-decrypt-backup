@@ -1,0 +1,30 @@
+FROM python:3.12-slim
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+ARG TARGETARCH
+
+RUN \
+  apt-get update; \
+  apt-get install -y --no-install-recommends curl ca-certificates tar; \
+  rm -rf /var/lib/apt/lists/*
+
+RUN curl -sSfL "https://go.dev/dl/go1.23.12.linux-${TARGETARCH}.tar.gz" | tar -xz -C /usr/local
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+RUN curl -sSfL "https://github.com/goss-org/goss/releases/latest/download/goss-linux-${TARGETARCH}" \
+      -o /usr/local/bin/goss && \
+    chmod 755 /usr/local/bin/goss
+
+RUN pip install --no-cache-dir securetar
+
+WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY go-hassio-tar/ ./go-hassio-tar/
+ENV CGO_ENABLED=0
+RUN go build -o /usr/local/bin/hassio-tar ./go-hassio-tar/
+
+COPY tests/ ./tests/
+RUN python tests/create_test_archives.py
+
+CMD ["goss", "-g", "tests/goss.yaml", "validate", "--format", "documentation"]

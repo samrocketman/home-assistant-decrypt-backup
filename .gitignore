@@ -4,4 +4,5 @@ passwd
 plain
 release/
 dist/
+test-results/
 hassio-tar

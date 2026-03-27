@@ -30,12 +30,22 @@ builds:
     ldflags:
       - -s -w
 
+# TODO consider upx compression again though it was fragile
+#upx:
+#  - enabled: true
+#    goos: [linux]
+#    compress: best
+#  - enabled: true
+#    goos: [windows]
+#    goarch: [amd64]
+#    compress: best
+
 archives:
   - id: hassio-tar
     formats:
       - binary
     name_template: >-
-      hassio-tar-{{ .Os }}-{{ if eq .Arch "amd64" }}amd64{{ else if eq .Arch "386" }}i386{{ else if eq .Arch "arm" }}armv{{ .Arm }}{{ else }}{{ .Arch }}{{ end }}{{ if eq .Os "windows" }}.exe{{ end }}
+      hassio-tar-{{ .Os }}-{{ if eq .Arch "amd64" }}amd64{{ else if eq .Arch "386" }}i386{{ else if eq .Arch "arm" }}armv{{ .Arm }}{{ else }}{{ .Arch }}{{ end }}
 
 checksum:
   name_template: "checksums.txt"
